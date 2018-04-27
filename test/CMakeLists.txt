@@ -49,13 +49,18 @@ ExternalProject_Add(
     URL https://github.com/nanopb/nanopb/archive/0.3.9.1.zip
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/nanopb
     # Disable install step
+    BUILD_COMMAND ""
     INSTALL_COMMAND ""
 )
 ExternalProject_Get_Property(nanopb source_dir binary_dir)
 
-file(GLOB SRCS *.cpp protocol/*.c ../src/lwstreams/* ${source_dir}/*.c)
+add_custom_command(OUTPUT ${source_dir}/pb_common.c DEPENDS nanopb COMMAND "")
+add_custom_command(OUTPUT ${source_dir}/pb_decode.c DEPENDS nanopb COMMAND "")
+add_custom_command(OUTPUT ${source_dir}/pb_encode.c DEPENDS nanopb COMMAND "")
 
-add_executable(testcommon ${SRCS})
+file(GLOB SRCS *.cpp protocol/*.c ../src/lwstreams/*)
+
+add_executable(testcommon ${SRCS} ${source_dir}/pb_common.c ${source_dir}/pb_decode.c ${source_dir}/pb_encode.c)
 
 add_definitions(-DLWS_ENABLE_PROTOBUF)
 
