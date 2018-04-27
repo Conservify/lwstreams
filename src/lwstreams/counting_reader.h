@@ -1,14 +1,13 @@
-#include <lwstreams/lwstreams.h>
+#include <lwstreams/streams.h>
 
 class CountingReader : public lws::Reader {
 private:
-    uint32_t total{ 0 };
-    uint32_t jitter{ 0 };
     uint8_t counter{ 0 };
+    uint32_t total{ 0 };
     uint32_t position{ 0 };
 
 public:
-    CountingReader(uint32_t total, uint32_t jitter) : total(total), jitter(jitter) {
+    CountingReader(uint32_t total) : total(total) {
     }
 
 public:
@@ -18,7 +17,6 @@ public:
     }
 
     void close() override {
-
     }
 
     int32_t read(uint8_t *ptr, size_t size) override {

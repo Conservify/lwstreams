@@ -1,5 +1,4 @@
 #include "test_streams.h"
-#include "counting_reader.h"
 #include "pbtest.h"
 #include "protocol/test.pb.h"
 
@@ -239,7 +238,7 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
 }
 
 TEST_F(StreamsSuite, CircularStreamsProtoCounting) {
-    auto reader = CountingReader{ 196, 0 };
+    auto reader = CountingReader{ 196 };
     auto total = 0;
 
     while (true) {
@@ -259,7 +258,7 @@ TEST_F(StreamsSuite, CircularStreamsProtoCopying) {
     auto buffer = lws::AlignedStorageBuffer<256>{};
 
     auto writer = lws::DirectWriter{ destination.toBufferPtr() };
-    auto reader = CountingReader{ 196, 0 };
+    auto reader = CountingReader{ 196 };
     auto total = 0;
 
     auto copier = lws::StreamCopier{ buffer.toBufferPtr() };

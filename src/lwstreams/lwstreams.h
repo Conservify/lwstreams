@@ -6,3 +6,4 @@
 #include "varint_streams.h"
 #include "copier.h"
 #include "protobuf.h"
+#include "counting_reader.h"
