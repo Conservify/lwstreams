@@ -53,7 +53,7 @@ ExternalProject_Add(
 )
 ExternalProject_Get_Property(nanopb source_dir binary_dir)
 
-file(GLOB SRCS *.cpp ../src/lwstreams/* ${source_dir}/*.c)
+file(GLOB SRCS *.cpp protocol/*.c ../src/lwstreams/* ${source_dir}/*.c)
 
 add_executable(testcommon ${SRCS})
 

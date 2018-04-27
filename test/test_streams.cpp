@@ -1,4 +1,8 @@
 #include "test_streams.h"
+#include "protocol/test.pb.h"
+
+bool pb_encode_string(pb_ostream_t *stream, const pb_field_t *field, void *const *arg);
+bool pb_decode_string(pb_istream_t *stream, const pb_field_t *, void **arg);
 
 class CountingReader : public lws::Reader {
 private:
@@ -248,24 +252,14 @@ TEST_F(StreamsSuite, CircularStreamsFull) {
     }
 }
 
-#if 0
 TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
-    fk::StaticPool<64> pool("Pool");
+    lwstest_Message incoming = lwstest_Message_init_default;
+    incoming.message.funcs.decode = pb_decode_string;
 
-    fk_data_DataRecord incoming = fk_data_DataRecord_init_default;
-    incoming.log.facility.arg = (void *)&pool;
-    incoming.log.facility.funcs.decode = fk::pb_decode_string;
-    incoming.log.message.arg = (void *)&pool;
-    incoming.log.message.funcs.decode = fk::pb_decode_string;
-
-    fk_data_DataRecord outgoing = fk_data_DataRecord_init_default;
-    outgoing.log.uptime = millis();
-    outgoing.log.time = millis();
-    outgoing.log.level = (uint32_t)LogLevels::INFO;
-    outgoing.log.facility.arg = (void *)"Facility";
-    outgoing.log.facility.funcs.encode = fk::pb_encode_string;
-    outgoing.log.message.arg = (void *)"Message";
-    outgoing.log.message.funcs.encode = fk::pb_encode_string;
+    lwstest_Message outgoing = lwstest_Message_init_default;
+    outgoing.time = 15687845564;
+    outgoing.message.arg = (void *)"abcdefghijklmno";
+    outgoing.message.funcs.encode = pb_encode_string;
 
     auto buffer = lws::AlignedStorageBuffer<64>{};
     auto ptr = buffer.toBufferPtr();
@@ -275,18 +269,18 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
     auto& writer = cs.getWriter();
 
     auto protoWriter = lws::ProtoBufMessageWriter{ writer };
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
 
     writer.close();
 
     auto protoReader = lws::ProtoBufMessageReader{ reader };
 
-    EXPECT_EQ(protoReader.read<64>(fk_data_DataRecord_fields, &incoming), 24);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), 24);
 
-    ASSERT_EQ(outgoing.log.uptime, incoming.log.uptime);
-    ASSERT_STREQ((const char *)outgoing.log.facility.arg, (const char *)incoming.log.facility.arg);
+    ASSERT_EQ(outgoing.time, incoming.time);
+    ASSERT_STREQ((const char *)outgoing.message.arg, (const char *)incoming.message.arg);
 
-    EXPECT_EQ(protoReader.read<64>(fk_data_DataRecord_fields, &incoming), -1);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), -1);
 
     // Notice that we're writing to the writer that we closed earlier. I think
     // that eventually this makes more sense if we throw here. Then we can
@@ -299,25 +293,18 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
     // expected to be closed. The idea is to prevent the re-using of readers
     // across a single operation from confusing things.
 
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
 
-    incoming = fk_data_DataRecord_init_default;
-    incoming.log.facility.arg = (void *)&pool;
-    incoming.log.facility.funcs.decode = fk::pb_decode_string;
-    incoming.log.message.arg = (void *)&pool;
-    incoming.log.message.funcs.decode = fk::pb_decode_string;
+    incoming = lwstest_Message_init_default;
+    incoming.message.funcs.decode = pb_decode_string;
 
-    EXPECT_EQ(protoReader.read<64>(fk_data_DataRecord_fields, &incoming), 24);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), 24);
 
-    incoming = fk_data_DataRecord_init_default;
-    incoming.log.facility.arg = (void *)&pool;
-    incoming.log.facility.funcs.decode = fk::pb_decode_string;
-    incoming.log.message.arg = (void *)&pool;
-    incoming.log.message.funcs.decode = fk::pb_decode_string;
+    incoming = lwstest_Message_init_default;
+    incoming.message.funcs.decode = pb_decode_string;
 
-    EXPECT_EQ(protoReader.read<64>(fk_data_DataRecord_fields, &incoming), -1);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), -1);
 }
-#endif
 
 TEST_F(StreamsSuite, CircularStreamsProtoCounting) {
     auto reader = CountingReader{ 196, 0 };
@@ -356,25 +343,20 @@ TEST_F(StreamsSuite, CircularStreamsProtoCopying) {
     EXPECT_EQ(total, 196);
 }
 
-#if 0
 TEST_F(StreamsSuite, CircularStreamsVarintStream) {
-    fk_data_DataRecord outgoing = fk_data_DataRecord_init_default;
-    outgoing.log.uptime = millis();
-    outgoing.log.time = millis();
-    outgoing.log.level = (uint32_t)LogLevels::INFO;
-    outgoing.log.facility.arg = (void *)"Facility";
-    outgoing.log.facility.funcs.encode = fk::pb_encode_string;
-    outgoing.log.message.arg = (void *)"Message";
-    outgoing.log.message.funcs.encode = fk::pb_encode_string;
+    lwstest_Message outgoing = lwstest_Message_init_default;
+    outgoing.time = 15687845564;
+    outgoing.message.arg = (void *)"abcdefghijklmno";
+    outgoing.message.funcs.encode = pb_encode_string;
 
     auto destination = lws::AlignedStorageBuffer<256>{};
     auto writer = lws::DirectWriter{ destination.toBufferPtr() };
 
     auto protoWriter = lws::ProtoBufMessageWriter{ writer };
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(fk_data_DataRecord_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
 
     {
         auto scratch = lws::AlignedStorageBuffer<256>{};
@@ -472,4 +454,36 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
         }
     }
 }
-#endif
+
+bool pb_encode_string(pb_ostream_t *stream, const pb_field_t *field, void *const *arg) {
+    if (!pb_encode_tag_for_field(stream, field)) {
+        return false;
+    }
+
+    auto str = (const char *)*arg;
+    if (str == nullptr) {
+        return pb_encode_string(stream, (uint8_t *)nullptr, 0);
+    }
+
+    return pb_encode_string(stream, (uint8_t *)str, strlen(str));
+}
+
+bool pb_decode_string(pb_istream_t *stream, const pb_field_t *, void **arg) {
+    auto len = stream->bytes_left;
+
+    if (len == 0) {
+        (*arg) = (void *)"";
+        return true;
+    }
+
+    auto *ptr = (uint8_t *)malloc(len + 1); // HACK: LEAK
+    if (!pb_read(stream, ptr, len)) {
+        return false;
+    }
+
+    ptr[len] = 0;
+
+    (*arg) = (void *)ptr;
+
+    return true;
+}
