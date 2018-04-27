@@ -109,7 +109,7 @@ VarintEncodedStream::DataBlock VarintEncodedStream::read() {
         if (bytes == 0) {
             // If we can't get a size from a full buffer, something has gone horribly wrong.
             totalSize = 0;
-            // fk_assert(bp.size - filled > 0);
+            lws_assert(bp.size - filled > 0);
             return DataBlock{ };
         }
 

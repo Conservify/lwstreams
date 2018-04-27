@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "debug.h"
+
 namespace lws {
 
 class BufferPtr {
@@ -18,7 +20,7 @@ public:
 
 public:
     uint8_t &operator[](int32_t index) {
-        // fk_assert(index >= 0 && index < (int32_t)size);
+        lws_assert(index >= 0 && index < (int32_t)size);
         return ptr[index];
     }
 };
@@ -44,7 +46,7 @@ public:
     }
 
     uint8_t &operator[](int32_t index) {
-        // fk_assert(index >= 0 && index < (int32_t)Size);
+        lws_assert(index >= 0 && index < (int32_t)Size);
         return ((uint8_t *)buffer)[index];
     }
 };
@@ -138,7 +140,7 @@ public:
     }
 
     BufferPtr toBufferPtr() {
-        // fk_assert(position >= 0);
+        lws_assert(position >= 0);
         return BufferPtr{ buffer.ptr, (size_t)position };
     }
 

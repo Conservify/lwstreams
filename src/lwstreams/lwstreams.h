@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "streams.h"
 #include "ring_buffers.h"
 #include "varint_streams.h"

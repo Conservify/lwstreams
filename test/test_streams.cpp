@@ -13,7 +13,7 @@ public:
 
 public:
     int32_t read() override {
-        // fk_assert(false);
+        lws_assert(false);
         return EOS;
     }
 
