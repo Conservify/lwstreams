@@ -1,48 +1,7 @@
 #include "test_streams.h"
+#include "counting_reader.h"
+#include "pbtest.h"
 #include "protocol/test.pb.h"
-
-bool pb_encode_string(pb_ostream_t *stream, const pb_field_t *field, void *const *arg);
-bool pb_decode_string(pb_istream_t *stream, const pb_field_t *, void **arg);
-
-class CountingReader : public lws::Reader {
-private:
-    uint32_t total{ 0 };
-    uint32_t jitter{ 0 };
-    uint8_t counter{ 0 };
-    uint32_t position{ 0 };
-
-public:
-    CountingReader(uint32_t total, uint32_t jitter) : total(total), jitter(jitter) {
-    }
-
-public:
-    int32_t read() override {
-        lws_assert(false);
-        return EOS;
-    }
-
-    void close() override {
-
-    }
-
-    int32_t read(uint8_t *ptr, size_t size) override {
-        auto remaining = total - position;
-        auto bytes = size > remaining ? remaining : (int32_t)size;
-
-        if (remaining == 0) {
-            return EOS;
-        }
-
-        for (auto i = 0; i < bytes; ++i) {
-            *ptr++ = counter++;
-        }
-
-        position += bytes;
-
-        return bytes;
-    }
-
-};
 
 StreamsSuite::StreamsSuite() {
 }
@@ -453,37 +412,4 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
             EXPECT_EQ(block.position, 0);
         }
     }
-}
-
-bool pb_encode_string(pb_ostream_t *stream, const pb_field_t *field, void *const *arg) {
-    if (!pb_encode_tag_for_field(stream, field)) {
-        return false;
-    }
-
-    auto str = (const char *)*arg;
-    if (str == nullptr) {
-        return pb_encode_string(stream, (uint8_t *)nullptr, 0);
-    }
-
-    return pb_encode_string(stream, (uint8_t *)str, strlen(str));
-}
-
-bool pb_decode_string(pb_istream_t *stream, const pb_field_t *, void **arg) {
-    auto len = stream->bytes_left;
-
-    if (len == 0) {
-        (*arg) = (void *)"";
-        return true;
-    }
-
-    auto *ptr = (uint8_t *)malloc(len + 1); // HACK: LEAK
-    if (!pb_read(stream, ptr, len)) {
-        return false;
-    }
-
-    ptr[len] = 0;
-
-    (*arg) = (void *)ptr;
-
-    return true;
 }

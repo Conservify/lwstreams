@@ -7,49 +7,9 @@
 #include <cstring>
 
 #include "debug.h"
+#include "buffers.h"
 
 namespace lws {
-
-class BufferPtr {
-public:
-    uint8_t *ptr{ nullptr };
-    size_t size{ 0 };
-
-public:
-    BufferPtr(uint8_t *ptr, size_t size) : ptr(ptr), size(size) { }
-
-public:
-    uint8_t &operator[](int32_t index) {
-        lws_assert(index >= 0 && index < (int32_t)size);
-        return ptr[index];
-    }
-};
-
-template<size_t Size>
-class AlignedStorageBuffer {
-private:
-    typename std::aligned_storage<sizeof(uint8_t), alignof(uint8_t)>::type buffer[Size];
-
-public:
-    const size_t size{ Size };
-
-public:
-    BufferPtr toBufferPtr() {
-        return BufferPtr{ (uint8_t *)buffer, Size };
-    }
-
-public:
-    void clear() {
-        for (size_t i = 0; i < Size; ++i) {
-            ((uint8_t *)buffer)[i] = 0;
-        }
-    }
-
-    uint8_t &operator[](int32_t index) {
-        lws_assert(index >= 0 && index < (int32_t)Size);
-        return ((uint8_t *)buffer)[index];
-    }
-};
 
 class Stream {
 public:
@@ -88,105 +48,6 @@ public:
         }
         return size;
     }
-};
-
-class DirectWriter : public Writer {
-private:
-    BufferPtr buffer;
-    int32_t position{ 0 };
-
-public:
-    DirectWriter(BufferPtr buffer) : buffer(buffer) {
-    }
-
-public:
-    using Writer::write;
-
-    int32_t write(uint8_t *ptr, size_t size) override {
-        if (position == EOS) {
-            return EOS;
-        }
-        auto available = buffer.size - position;
-        auto copying = size > available ? available : size;
-        if (copying > 0) {
-            memcpy(buffer.ptr + position, ptr, copying);
-            position += copying;
-        }
-        return copying;
-    }
-
-    int32_t write(uint8_t byte) override {
-        if (position == EOS) {
-            return EOS;
-        }
-        if (position == (int32_t)buffer.size) {
-            return EOS;
-        }
-        buffer.ptr[position++] = byte;
-        return 1;
-    }
-
-    void close() override {
-        position = EOS;
-    }
-
-public:
-    int32_t size() {
-        return position;
-    }
-
-    int32_t available() {
-        return buffer.size - position;
-    }
-
-    BufferPtr toBufferPtr() {
-        lws_assert(position >= 0);
-        return BufferPtr{ buffer.ptr, (size_t)position };
-    }
-
-protected:
-    uint8_t *ptr() {
-        return buffer.ptr + position;
-    }
-
-    int32_t seek(int32_t bytes) {
-        position += bytes;
-        return position;
-    }
-
-};
-
-class DirectReader : public Reader {
-private:
-    BufferPtr buffer;
-    int32_t position{ 0 };
-
-public:
-    DirectReader(BufferPtr buffer) : buffer(buffer) {
-    }
-
-public:
-    using Reader::read;
-
-    int32_t read() override {
-        if (position == EOS) {
-            return EOS;
-        }
-        if (position >= (int32_t)buffer.size) {
-            return EOS;
-        }
-        return buffer.ptr[position++];
-    }
-
-    void close() override {
-        position = EOS;
-    }
-
-public:
-    int32_t available() {
-        return buffer.size - position;
-    }
-
 };
 
 class BufferedReader : public Reader {
@@ -228,20 +89,6 @@ protected:
         }
         return buffered;
     }
-
-};
-
-class StreamCopier {
-private:
-    BufferPtr buffer;
-    size_t position{ 0 };
-
-public:
-    StreamCopier(BufferPtr &&bp) : buffer(std::forward<BufferPtr>(bp)) {
-    }
-
-public:
-    int32_t copy(Reader &reader, Writer &writer);
 
 };
 

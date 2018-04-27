@@ -1,6 +1,9 @@
 #ifndef LWS_VARINT_STREAMS_H_INCLUDED
 #define LWS_VARINT_STREAMS_H_INCLUDED
 
+#include "varints.h"
+#include "streams.h"
+
 namespace lws {
 
 class VarintEncodedStream {

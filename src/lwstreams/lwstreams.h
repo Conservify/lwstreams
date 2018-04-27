@@ -1,5 +1,8 @@
 #include "debug.h"
 #include "streams.h"
+#include "direct_streams.h"
+#include "circular_streams.h"
 #include "ring_buffers.h"
 #include "varint_streams.h"
+#include "copier.h"
 #include "protobuf.h"
