@@ -1,4 +1,9 @@
+#ifndef LWS_COUNTING_READER_H_INCLUDED
+#define LWS_COUNTING_READER_H_INCLUDED
+
 #include <lwstreams/streams.h>
+
+namespace lws {
 
 class CountingReader : public lws::Reader {
 private:
@@ -27,7 +32,7 @@ public:
             return EOS;
         }
 
-        for (auto i = 0; i < bytes; ++i) {
+        for (auto i = 0; i < (int32_t)bytes; ++i) {
             *ptr++ = counter++;
         }
 
@@ -37,3 +42,7 @@ public:
     }
 
 };
+
+}
+
+#endif
