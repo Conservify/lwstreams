@@ -9,7 +9,10 @@ all: $(BUILD)
 	cd $(BUILD) && cmake ../ && make
 
 test: all
-	cd $(BUILD) && make test
+	cd $(BUILD) && env GTEST_COLOR=1 make testcommon test ARGS=-VV
+
+doc: all
+	cd $(BUILD) && make doc
 
 clean:
 	rm -rf $(BUILD)
