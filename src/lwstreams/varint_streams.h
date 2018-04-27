@@ -1,6 +1,5 @@
-#pragma once
-
-#include "streams.h"
+#ifndef LWS_VARINT_STREAMS_H_INCLUDED
+#define LWS_VARINT_STREAMS_H_INCLUDED
 
 namespace lws {
 
@@ -43,3 +42,5 @@ public:
 };
 
 }
+
+#endif

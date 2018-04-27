@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LWS_STREAMS_H_INCLUDED
+#define LWS_STREAMS_H_INCLUDED
 
 #include <utility>
 #include <cstdint>
@@ -244,5 +245,4 @@ public:
 
 }
 
-#include "ring_buffers.h"
-#include "varint_streams.h"
+#endif

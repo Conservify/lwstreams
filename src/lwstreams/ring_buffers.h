@@ -1,6 +1,7 @@
-#include <utility>
+#ifndef LWS_RING_BUFFERS_H_INCLUDED
+#define LWS_RING_BUFFERS_H_INCLUDED
 
-#pragma once
+#include <utility>
 
 namespace lws {
 
@@ -20,11 +21,11 @@ public:
     }
 
     RingBufferG(T bp) : bp(bp) {
-        fk_assert(is_power_of_2(bp.size));
+        // fk_assert(is_power_of_2(bp.size));
     }
 
     RingBufferG(T &&bp) : bp(std::forward<T>(bp)) {
-        fk_assert(is_power_of_2(bp.size));
+        // fk_assert(is_power_of_2(bp.size));
     }
 
     void clear() {
@@ -33,12 +34,12 @@ public:
     }
 
     void push(uint8_t c) {
-        fk_assert(!full());
+        // fk_assert(!full());
         bp[mask(write++)] = c;
     }
 
     uint8_t shift() {
-        fk_assert(!empty());
+        // fk_assert(!empty());
         return bp[mask(read++)];
     }
 
@@ -206,3 +207,5 @@ void RingWriter<RingBufferType>::close() {
 }
 
 }
+
+#endif
