@@ -47,37 +47,6 @@ TEST_F(StreamsSuite, BufferedReader) {
     }
 }
 
-/*
-TEST_F(StreamsSuite, ConcatenatedReader) {
-    auto buffer = lws::AlignedStorageBuffer<256>{};
-    auto ptr = buffer.toBufferPtr();
-
-    fk_module_WireMessageQuery message = fk_module_WireMessageQuery_init_default;
-    message.type = fk_module_QueryType_QUERY_CAPABILITIES;
-    message.queryCapabilities.version = FK_MODULE_PROTOCOL_VERSION;
-
-    auto writer = lws::DirectWriter{ ptr };
-    auto queryWriter = lws::ProtoBufMessageWriter{ writer };
-    queryWriter.write(fk_module_WireMessageQuery_fields, &message);
-
-    auto buffer1 = lws::AlignedStorageBuffer<256>{};
-    auto buffer2 = lws::AlignedStorageBuffer<256>{};
-    auto writer1 = lws::DirectWriter{ buffer1.toBufferPtr() };
-    auto writer2 = lws::DirectWriter{ buffer2.toBufferPtr() };
-
-    auto reader1 = lws::DirectReader{ writer1.toBufferPtr() };
-    auto reader2 = lws::DirectReader{ writer2.toBufferPtr() };
-    auto readers = lws::ConcatenatedReader{ &reader1, &reader2 };
-
-    while (true) {
-        auto r = readers.read();
-        if (r < 0) {
-            break;
-        }
-    }
-}
-*/
-
 TEST_F(StreamsSuite, CircularStreamsCloseMidRead) {
     auto circularStreams = lws::CircularStreams<lws::RingBufferN<256>>{ };
 
@@ -220,6 +189,10 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
     outgoing.message.arg = (void *)"abcdefghijklmno";
     outgoing.message.funcs.encode = pb_encode_string;
 
+    size_t messageSize = 0;
+    EXPECT_TRUE(pb_get_encoded_size(&messageSize, lwstest_Message_fields, &outgoing));
+    messageSize += lws::encodeVarint(messageSize, nullptr);
+
     auto buffer = lws::AlignedStorageBuffer<64>{};
     auto ptr = buffer.toBufferPtr();
     auto cs = lws::CircularStreams<lws::RingBufferPtr>{ ptr };
@@ -228,13 +201,13 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
     auto& writer = cs.getWriter();
 
     auto protoWriter = lws::ProtoBufMessageWriter{ writer };
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), messageSize);
 
     writer.close();
 
     auto protoReader = lws::ProtoBufMessageReader{ reader };
 
-    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), 24);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), messageSize);
 
     ASSERT_EQ(outgoing.time, incoming.time);
     ASSERT_STREQ((const char *)outgoing.message.arg, (const char *)incoming.message.arg);
@@ -252,12 +225,12 @@ TEST_F(StreamsSuite, CircularStreamsProtoRoundTrip) {
     // expected to be closed. The idea is to prevent the re-using of readers
     // across a single operation from confusing things.
 
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), messageSize);
 
     incoming = lwstest_Message_init_default;
     incoming.message.funcs.decode = pb_decode_string;
 
-    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), 24);
+    EXPECT_EQ(protoReader.read<64>(lwstest_Message_fields, &incoming), messageSize);
 
     incoming = lwstest_Message_init_default;
     incoming.message.funcs.decode = pb_decode_string;
@@ -308,14 +281,18 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
     outgoing.message.arg = (void *)"abcdefghijklmno";
     outgoing.message.funcs.encode = pb_encode_string;
 
+    size_t messageSize = 0;
+    EXPECT_TRUE(pb_get_encoded_size(&messageSize, lwstest_Message_fields, &outgoing));
+    auto delimitedMessageSize = messageSize + lws::encodeVarint(messageSize, nullptr);
+
     auto destination = lws::AlignedStorageBuffer<256>{};
     auto writer = lws::DirectWriter{ destination.toBufferPtr() };
 
     auto protoWriter = lws::ProtoBufMessageWriter{ writer };
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
-    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), 24);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), delimitedMessageSize);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), delimitedMessageSize);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), delimitedMessageSize);
+    EXPECT_EQ(protoWriter.write(lwstest_Message_fields, &outgoing), delimitedMessageSize);
 
     {
         auto scratch = lws::AlignedStorageBuffer<256>{};
@@ -325,8 +302,8 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
         for (size_t i = 0; i < 4; ++i)
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
-            EXPECT_EQ(block.blockSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
+            EXPECT_EQ(block.blockSize, messageSize);
             EXPECT_EQ(block.position, 0);
         }
         {
@@ -339,40 +316,41 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
         auto scratch = lws::AlignedStorageBuffer<32>{};
         auto reader = lws::DirectReader{ writer.toBufferPtr() };
         auto varintReader = lws::VarintEncodedStream{ reader, scratch.toBufferPtr() };
+        auto totalRead = 0;
 
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
-            EXPECT_EQ(block.blockSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
+            EXPECT_EQ(block.blockSize, messageSize);
             EXPECT_EQ(block.position, 0);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 7);
             EXPECT_EQ(block.position, 0);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 16);
             EXPECT_EQ(block.position, 7);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 15);
             EXPECT_EQ(block.position, 0);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 8);
             EXPECT_EQ(block.position, 15);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 23);
             EXPECT_EQ(block.position, 0);
         }
@@ -386,28 +364,29 @@ TEST_F(StreamsSuite, CircularStreamsVarintStream) {
         auto scratch = lws::AlignedStorageBuffer<8>{};
         auto reader = lws::DirectReader{ writer.toBufferPtr() };
         auto varintReader = lws::VarintEncodedStream{ reader, scratch.toBufferPtr() };
+        auto totalRead = 0;
 
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 7);
             EXPECT_EQ(block.position, 0);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 8);
             EXPECT_EQ(block.position, 7);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 8);
             EXPECT_EQ(block.position, 15);
         }
         {
             auto block = varintReader.read();
-            EXPECT_EQ(block.totalSize, 23);
+            EXPECT_EQ(block.totalSize, messageSize);
             EXPECT_EQ(block.blockSize, 7);
             EXPECT_EQ(block.position, 0);
         }

@@ -20,12 +20,17 @@ size_t encodeVarint(int_t value, uint8_t *ptr) {
     // and set the next byte flag
     while (value > 127) {
         //|128: Set the next byte flag
-        ptr[outputSize] = ((uint8_t)(value & 127)) | 128;
+        if (ptr != nullptr) {
+            ptr[outputSize] = ((uint8_t)(value & 127)) | 128;
+        }
         //Remove the seven bits we just wrote
         value >>= 7;
         outputSize++;
     }
-    ptr[outputSize++] = ((uint8_t)value) & 127;
+    if (ptr != nullptr) {
+        ptr[outputSize] = ((uint8_t)value) & 127;
+    }
+    outputSize++;
     return outputSize;
 }
 
