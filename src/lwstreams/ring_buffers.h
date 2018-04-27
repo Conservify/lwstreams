@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace eio {
+namespace lws {
 
 constexpr bool is_power_of_2(int32_t v) {
     return v && ((v & (v - 1)) == 0);

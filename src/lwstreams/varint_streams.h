@@ -2,7 +2,7 @@
 
 #include "streams.h"
 
-namespace eio {
+namespace lws {
 
 class VarintEncodedStream {
 public:

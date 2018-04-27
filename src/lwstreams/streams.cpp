@@ -1,7 +1,7 @@
 #include "streams.h"
 #include "varint_streams.h"
 
-namespace eio {
+namespace lws {
 
 int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
     auto available = buffer.size - position;

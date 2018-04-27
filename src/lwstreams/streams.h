@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace eio {
+namespace lws {
 
 class BufferPtr {
 public:
