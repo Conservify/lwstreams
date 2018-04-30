@@ -14,16 +14,29 @@ public:
     uint8_t *ptr{ nullptr };
     size_t size{ 0 };
 
+private:
+    BufferPtr() {
+    }
+
 public:
+    static BufferPtr Empty;
+
     BufferPtr(uint8_t *ptr, size_t size) : ptr(ptr), size(size) { }
 
 public:
+    bool valid() {
+        return ptr != nullptr || size == 0;
+    }
+
+public:
     uint8_t &operator[](int32_t index) {
+        lws_assert(ptr != nullptr);
         lws_assert(index >= 0 && index < (int32_t)size);
         return ptr[index];
     }
 
     uint8_t operator[] (int32_t index) const {
+        lws_assert(ptr != nullptr);
         lws_assert(index >= 0 && index < (int32_t)size);
         return ptr[index];
     }
