@@ -24,6 +24,9 @@ public:
     virtual void close() = 0;
 
 public:
+    virtual ~Writer() { }
+
+public:
     int32_t write(const char *str) {
         return write((uint8_t *)str, strlen(str));
     }
@@ -33,6 +36,9 @@ class Reader : public Stream {
 public:
     virtual int32_t read() = 0;
     virtual void close() = 0;
+
+public:
+    virtual ~Reader() { }
 
 public:
     virtual int32_t read(uint8_t *ptr, size_t size) {
