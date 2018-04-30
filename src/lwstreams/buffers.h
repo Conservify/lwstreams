@@ -22,7 +22,13 @@ public:
         lws_assert(index >= 0 && index < (int32_t)size);
         return ptr[index];
     }
-};
+
+    uint8_t operator[] (int32_t index) const {
+        lws_assert(index >= 0 && index < (int32_t)size);
+        return ptr[index];
+    }
+
+ };
 
 template<size_t Size>
 class AlignedStorageBuffer {
