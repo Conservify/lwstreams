@@ -1,6 +1,6 @@
 BUILD=build
 
-default: all
+default: all test
 
 $(BUILD):
 	mkdir -p $(BUILD)
