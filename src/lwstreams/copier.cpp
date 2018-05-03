@@ -22,8 +22,9 @@ int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
         if (wrote > 0) {
             copied = wrote;
             if (wrote != (int32_t)position) {
-                memmove(buffer.ptr, buffer.ptr + wrote, wrote);
-                position -= wrote;
+                auto remaining = position - wrote;
+                memmove(buffer.ptr, buffer.ptr + wrote, remaining);
+                position = remaining;
             }
             else {
                 position = 0;
