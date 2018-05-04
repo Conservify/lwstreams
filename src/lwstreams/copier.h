@@ -19,6 +19,17 @@ public:
 
 };
 
+template<size_t Size>
+class BufferedStreamCopier : public StreamCopier {
+private:
+    lws::AlignedStorageBuffer<Size> buffer;
+
+public:
+    BufferedStreamCopier() : StreamCopier(buffer.toBufferPtr()) {
+    }
+
+};
+
 }
 
 #endif
