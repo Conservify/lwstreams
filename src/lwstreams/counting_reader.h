@@ -5,7 +5,7 @@
 
 namespace lws {
 
-class CountingReader : public lws::Reader {
+class CountingReader : public lws::SizedReader {
 private:
     uint8_t counter{ 0 };
     uint32_t total{ 0 };
@@ -39,6 +39,10 @@ public:
         position += bytes;
 
         return bytes;
+    }
+
+    size_t size() override {
+        return total;
     }
 
 };

@@ -56,6 +56,12 @@ public:
     }
 };
 
+class SizedReader : public Reader {
+public:
+    virtual size_t size() = 0;
+
+};
+
 class BufferedReader : public Reader {
 private:
     BufferPtr buffer;
