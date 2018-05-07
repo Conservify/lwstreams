@@ -2,6 +2,10 @@
 
 namespace lws {
 
+void StreamCopier::restart() {
+    position = 0;
+}
+
 int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
     auto available = buffer.size - position;
     auto eos = false;
@@ -12,7 +16,7 @@ int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
         if (read == Stream::EOS) {
             eos = true;
         }
-        if (read > 0) {
+        else if (read > 0) {
             position += read;
         }
     }

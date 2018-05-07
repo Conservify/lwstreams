@@ -15,6 +15,8 @@ public:
     }
 
 public:
+    void restart();
+
     int32_t copy(Reader &reader, Writer &writer);
 
 };
