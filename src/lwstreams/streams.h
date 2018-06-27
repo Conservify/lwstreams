@@ -104,6 +104,20 @@ protected:
 
 };
 
+class NullWriter : public Writer {
+public:
+    virtual int32_t write(uint8_t *ptr, size_t size) override {
+        return size;
+    }
+
+    virtual int32_t write(uint8_t byte) override {
+        return 1;
+    }
+
+    virtual void close() override {
+    }
+};
+
 }
 
 #endif
