@@ -23,6 +23,9 @@ int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
 
     if (position > 0) {
         auto wrote = writer.write(buffer.ptr, position);
+        if (wrote == Stream::EOS) {
+            return Stream::EOS;
+        }
         if (wrote > 0) {
             copied = wrote;
             if (wrote != (int32_t)position) {
