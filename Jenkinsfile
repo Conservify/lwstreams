@@ -1,7 +1,9 @@
 @Library('conservify') _
 
+conservifyProperties()
+
 timestamps {
     node () {
-        conservifyBuild(name: 'lwstreams', repository: 'https://github.com/Conservify/lwstreams.git')
+        conservifyBuild(name: 'lwstreams')
     }
 }
