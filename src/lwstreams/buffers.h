@@ -28,6 +28,9 @@ public:
         return ptr != nullptr || size == 0;
     }
 
+    void clear() {
+    }
+
 public:
     uint8_t &operator[](int32_t index) {
         lws_assert(ptr != nullptr);

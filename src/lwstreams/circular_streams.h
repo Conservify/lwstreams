@@ -104,8 +104,15 @@ void RingWriter<RingBufferType>::close() {
     closed = true;
 }
 
+class Pipe {
+public:
+    virtual Writer &getWriter() = 0;
+    virtual Reader &getReader() = 0;
+    virtual void clear() = 0;
+};
+
 template<typename RingBufferType>
-class CircularStreams {
+class CircularStreams : public Pipe {
     using OuterType = CircularStreams<RingBufferType>;
 
     RingBufferType buffer;
@@ -120,15 +127,15 @@ public:
     }
 
 public:
-    Writer &getWriter() {
+    Writer &getWriter() override {
         return writer;
     }
 
-    Reader &getReader() {
+    Reader &getReader() override {
         return reader;
     }
 
-    void clear() {
+    void clear() override {
         buffer.clear();
         reader = RingReader<RingBufferType>{ &buffer, &writer };
         writer = RingWriter<RingBufferType>{ &buffer, &reader };
