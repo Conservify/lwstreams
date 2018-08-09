@@ -29,6 +29,9 @@ public:
     }
 
     void clear() {
+        for (size_t i = 0; i < size; ++i) {
+            ptr[i] = 0;
+        }
     }
 
 public:
