@@ -39,7 +39,7 @@ int32_t StreamCopier::copy(Reader &reader, Writer &writer) {
         }
     }
 
-    if (position == 0 && eos) {
+    if (copied == 0 && position == 0 && eos) {
         return Stream::EOS;
     }
 

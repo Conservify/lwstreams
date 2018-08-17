@@ -253,6 +253,30 @@ TEST_F(StreamsSuite, CircularStreamsProtoCounting) {
     EXPECT_EQ(total, 196);
 }
 
+TEST_F(StreamsSuite, StreamCopyingLastCopiedAmount) {
+    uint8_t temp[256];
+
+    lws::CircularStreams<lws::RingBufferN<256>> outgoing;
+
+    auto reader = lws::CountingReader{ 163 + 163 + 256 + 1 };
+
+    auto buffer = lws::AlignedStorageBuffer<256>{};
+    auto copier = lws::StreamCopier{ buffer.toBufferPtr() };
+
+    ASSERT_EQ(copier.copy(reader, outgoing.getWriter()), 256);
+    outgoing.getReader().read(temp, 163);
+
+    ASSERT_EQ(copier.copy(reader, outgoing.getWriter()), 163);
+    outgoing.getReader().read(temp, 163);
+
+    ASSERT_EQ(copier.copy(reader, outgoing.getWriter()), 163);
+    outgoing.getReader().read(temp, 163);
+
+    ASSERT_EQ(copier.copy(reader, outgoing.getWriter()), 1);
+
+    ASSERT_EQ(copier.copy(reader, outgoing.getWriter()), -1);
+}
+
 TEST_F(StreamsSuite, CircularStreamsProtoCopying) {
     auto destination = lws::AlignedStorageBuffer<256>{};
     auto buffer = lws::AlignedStorageBuffer<256>{};
