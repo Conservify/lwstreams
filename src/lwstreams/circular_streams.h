@@ -115,30 +115,34 @@ template<typename RingBufferType>
 class CircularStreams : public Pipe {
     using OuterType = CircularStreams<RingBufferType>;
 
-    RingBufferType buffer;
-    RingReader<RingBufferType> reader{ &buffer, &writer };
-    RingWriter<RingBufferType> writer{ &buffer, &reader };
+    RingBufferType buffer_;
+    RingReader<RingBufferType> reader_{ &buffer_, &writer_ };
+    RingWriter<RingBufferType> writer_{ &buffer_, &reader_ };
 
 public:
     CircularStreams() {
     }
 
-    CircularStreams(RingBufferType &&buffer) : buffer(std::forward<RingBufferType>(buffer)) {
+    CircularStreams(RingBufferType &&buffer) : buffer_(std::forward<RingBufferType>(buffer)) {
     }
 
 public:
     Writer &getWriter() override {
-        return writer;
+        return writer_;
     }
 
     Reader &getReader() override {
-        return reader;
+        return reader_;
+    }
+
+    RingBufferType &buffer() {
+        return buffer_;
     }
 
     void clear() override {
-        buffer.clear();
-        reader = RingReader<RingBufferType>{ &buffer, &writer };
-        writer = RingWriter<RingBufferType>{ &buffer, &reader };
+        buffer_.clear();
+        reader_ = RingReader<RingBufferType>{ &buffer_, &writer_ };
+        writer_ = RingWriter<RingBufferType>{ &buffer_, &reader_ };
     }
 
 };
