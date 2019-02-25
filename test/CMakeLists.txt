@@ -46,7 +46,7 @@ include_directories("${source_dir}/googletest/include"
 # Download and install GoogleTest
 ExternalProject_Add(
     nanopb
-    URL https://github.com/nanopb/nanopb/archive/0.3.9.1.zip
+    GIT_REPOSITORY https://github.com/nanopb/nanopb.git
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/nanopb
     # Disable install step
     BUILD_COMMAND ""

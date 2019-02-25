@@ -17,7 +17,7 @@ public:
     ProtoBufMessageWriter(Writer &target) : target(&target) {
     }
 
-    int32_t write(const pb_field_t *fields, void *message) {
+    int32_t write(const pb_msgdesc_t *fields, void *message) {
         size_t required = 0;
 
         if (!pb_get_encoded_size(&required, fields, message)) {
@@ -46,7 +46,7 @@ public:
     }
 
     template<size_t Size>
-    int32_t read(const pb_field_t *fields, void *message) {
+    int32_t read(const pb_msgdesc_t *fields, void *message) {
         uint8_t buffer[Size];
         auto bytes = target->read(buffer, sizeof(buffer));
         if (bytes < 0) {
