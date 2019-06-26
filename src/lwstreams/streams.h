@@ -56,6 +56,28 @@ public:
     }
 };
 
+class StringReader : public Reader {
+private:
+    const char *str_;
+    const char *p_;
+
+public:
+    StringReader(const char *str) : str_(str), p_(str) {
+    }
+
+public:
+    int32_t read() override {
+        if (*p_ == 0) {
+            return EOS;
+        }
+        return *p_++;
+    }
+
+    void close() {
+    }
+
+};
+
 class SizedReader : public Reader {
 public:
     virtual size_t size() = 0;
