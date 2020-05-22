@@ -6,6 +6,7 @@ $(BUILD):
 	mkdir -p $(BUILD)
 
 all: $(BUILD)
+	cmake --version
 	cd $(BUILD) && cmake ../
 	$(MAKE) -C $(BUILD)
 
