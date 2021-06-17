@@ -2,7 +2,6 @@ PROTOC_VERSION = 3.11.2
 PROTOC = $(PROTOC_BIN)/protoc
 BUILD ?= $(abspath build)
 PROTOC_BIN = $(BUILD)/bin
-PATH := $(BUILD)/bin:$(PATH) 
 
 default: all test
 

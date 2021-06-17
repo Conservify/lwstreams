@@ -49,6 +49,7 @@ ExternalProject_Add(
     GIT_REPOSITORY https://github.com/nanopb/nanopb.git
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/nanopb
     # Disable install step
+    CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
 )
