@@ -1,12 +1,12 @@
+PROTOC_VERSION = 3.11.2
+PROTOC = $(PROTOC_BIN)/protoc
 BUILD ?= $(abspath build)
+PROTOC_BIN = $(BUILD)/bin
+PATH := $(BUILD)/bin:$(PATH) 
 
 default: all test
 
-$(BUILD):
-	mkdir -p $(BUILD)
-
 all: $(BUILD)
-	cmake --version
 	cd $(BUILD) && cmake ../
 	$(MAKE) -C $(BUILD)
 
@@ -21,5 +21,12 @@ clean:
 
 veryclean: clean
 	rm -rf gitdeps
+
+$(BUILD): third-party/protoc-$(PROTOC_VERSION)-linux-x86_64.zip
+	mkdir -p $(BUILD)
+	cd $(BUILD) && unzip ../third-party/protoc-$(PROTOC_VERSION)-linux-x86_64.zip
+
+third-party/protoc-$(PROTOC_VERSION)-linux-x86_64.zip:
+	wget "https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-linux-x86_64.zip"
 
 .PHONY: doc
